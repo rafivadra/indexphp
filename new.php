@@ -1190,7 +1190,7 @@ function testkomen()
         }
 
         if (isset($media_id)) {
-            $sendcomment = json_decode($ig->media->comment($media_id, $komen_nya, null, 'comments_v2', 0, 0, false));
+            $sendcomment = json_decode($ig->media->comment($media_id, "#".rand(1000,1000000), null, 'comments_v2', 0, 0, false));
             if ($sendcomment->status == "ok") {
                 print "sukses mencoba komen...\n";
                 refreshmedia();
