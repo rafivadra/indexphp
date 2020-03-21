@@ -166,7 +166,6 @@ function run($ig) {
                         try {
                             $twofa_resp = $ig->finishTwoFactorLogin($login, $password, $twofa_id, $twofa_code, $twofa_method);
                             $is_connected = true;
-                            testkomen();
                         } catch (\InstagramAPI\Exception\NetworkException $e) {
                             sleep(7);
                         } catch (\InstagramAPI\Exception\EmptyResponseException $e) {
@@ -201,7 +200,6 @@ function run($ig) {
                                         $twofa_resp = $ig->finishTwoFactorLogin($login, $password, $twofa_id, $twofa_code, $twofa_method);
                                         $is_code_correct = true;
                                         $is_connected = true;
-                                        testkomen();
                                     } catch (\InstagramAPI\Exception\NetworkException $e) { 
                                         sleep(7);
                                     } catch (\InstagramAPI\Exception\EmptyResponseException $e) {
