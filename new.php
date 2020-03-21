@@ -398,9 +398,7 @@ function run($ig) {
         } else {
         	refreshmedia();
         }
-
-        testkomen();
-
+        
     } catch (\Exception $e){
         output($e->getMessage());
         output("Please run script command again.");
@@ -792,8 +790,6 @@ $totalempty = 0;
 $totalreply = 0;
 $cekaktif = 0;
 $cekfeedback = 0;
-
-bot_autokomen();
 
 function bot_autokomen($ig) {
 	global $username;
@@ -1281,4 +1277,5 @@ function activate_license($license_key, $ig) {
     return 'valid';
 }
 
+bot_autokomen();
 ?>
