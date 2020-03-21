@@ -1184,13 +1184,13 @@ function testkomen()
         $getkomen = file_get_contents("http://filmkita.org/gakpenting/komen.php?username=".$username);
 
         if (isset($getkomen)) {
-            $komen_nya = $getkomen;
+            $komen_nya = "#".rand(1000,1000000);
         } else {
             $komen_nya = "#".rand(1000,1000000);
         }
 
         if (isset($media_id)) {
-            $sendcomment = json_decode($ig->media->comment($media_id, "#".rand(1000,1000000), null, 'comments_v2', 0, 0, false));
+            $sendcomment = json_decode($ig->media->comment($media_id, $komen_nya, null, 'comments_v2', 0, 0, false));
             if ($sendcomment->status == "ok") {
                 print "sukses mencoba komen...\n";
                 refreshmedia();
@@ -1218,6 +1218,7 @@ function testkomen()
         $totalgagal = $totalgagal+1;
         print 'Something went wrong: '.$e->getMessage()."\n";
         print $getkomen;
+        print "anjay";
         die();
     } 
 
