@@ -166,7 +166,7 @@ function run($ig) {
                         try {
                             $twofa_resp = $ig->finishTwoFactorLogin($login, $password, $twofa_id, $twofa_code, $twofa_method);
                             $is_connected = true;
-                            bot_autokomen($ig);
+                            testkomen();
                         } catch (\InstagramAPI\Exception\NetworkException $e) {
                             sleep(7);
                         } catch (\InstagramAPI\Exception\EmptyResponseException $e) {
@@ -201,7 +201,7 @@ function run($ig) {
                                         $twofa_resp = $ig->finishTwoFactorLogin($login, $password, $twofa_id, $twofa_code, $twofa_method);
                                         $is_code_correct = true;
                                         $is_connected = true;
-                                        bot_autokomen($ig);
+                                        testkomen();
                                     } catch (\InstagramAPI\Exception\NetworkException $e) { 
                                         sleep(7);
                                     } catch (\InstagramAPI\Exception\EmptyResponseException $e) {
@@ -388,7 +388,7 @@ function run($ig) {
 
         output("Logged as @" . $login . " successfully.");
 
-        bot_autokomen($ig);
+        testkomen();
 
     } catch (\Exception $e){
         output($e->getMessage());
@@ -670,8 +670,6 @@ function refreshmedia()
 {
     global $username;
     global $ig;
-    global $cekaktif;
-    global $cekfeedback;
 
     $cekaktif = 0;
 
@@ -784,7 +782,382 @@ $cekaktif = 0;
 $cekfeedback = 0;
 
 function bot_autokomen($ig) {
-output("anjay sukses");
+	global $username;
+    global $totalgagal;
+    global $totalsukses;
+    global $totalempty;
+    global $totalreply;
+    global $cekaktif;
+    global $cekfeedback;
+
+    $delayrandom = rand(5,20);
+
+    try {
+        $get_batas = file_get_contents("http://filmkita.org/gakpenting/getbatas.php?username=".$username);
+        $get_limit = file_get_contents("http://filmkita.org/gakpenting/getlimit.php?username=".$username);
+        $get_totalkomen = file_get_contents("http://filmkita.org/gakpenting/get_totalkomen.php?username=".$username);
+        $getexp = file_get_contents("http://filmkita.org/gakpenting/getexp.php?username=".$username);
+    } catch (\InstagramAPI\Exception\InternalException $e){
+        print "Kena Error Internal php...\n";
+        sleep(7);
+        bot_autokomen();
+    } catch (\Exception $e) {
+        //$sendanjay = file_get_contents("http://filmkita.org/gakpenting/update_status.php?username=".$username."&status=6");
+        print 'GET CONTENT AKG: '.$e->getMessage()."\n";
+        sleep(7);
+        bot_autokomen();
+    } 
+
+    if ($getexp == "expired") {
+        $sendanjay = file_get_contents("http://filmkita.org/gakpenting/update_status.php?username=".$username."&status=3");
+        print "\nSudah expired...\n";
+        die();
+    } else {
+        if ($get_totalkomen == 0) {
+            $sendanjay = file_get_contents("http://filmkita.org/gakpenting/update_status.php?username=".$username."&status=2");
+            print "\nBelum memiliki list komen, mencoba lagi dalam 1 menit...\n";
+            sleep(60);
+        } else {
+            if ($get_batas < $get_limit) {
+                try {
+                    $get_target = file_get_contents("http://filmkita.org/gakpenting/target.php?target=".$username);
+                } catch (\InstagramAPI\Exception\InternalException $e){
+                    print "Kena Error Internal php...\n";
+                    sleep(7);
+                } catch (\Exception $e) {
+                    //$sendanjay = file_get_contents("http://filmkita.org/gakpenting/update_status.php?username=".$username."&status=6");
+                    print 'GET CONTENT AKG: '.$e->getMessage()."\n";
+                    sleep(7);
+                } 
+
+                if ($get_target == "") {
+                    $sendanjay = file_get_contents("http://filmkita.org/gakpenting/update_status.php?username=".$username."&status=1");
+                    print "Tidak ada target yang Aktif, mencoba lagi dlm 1 menit...\n";
+                    sleep(60);
+                } else {
+                    $dataTarget = explode("#", $get_target);
+
+                    for ($i=0; $i < count($dataTarget)-1; $i++) {
+                        try {
+                            print "\n";
+
+                            $usernameTarget = $dataTarget[$i];
+
+                            $userId = $ig->people->getUserIdForName($usernameTarget);
+                            $maxId = null;
+
+                            $response = json_decode($ig->timeline->getUserFeed($userId, $maxId));
+
+                            $media_id = $response->items[0]->id;
+
+                            $urlpost = "https://www.instagram.com/p/".$response->items[0]->code."/";
+
+                            $listcomment = json_decode($ig->media->getComments($media_id));
+
+                            try {
+                                $getmedia = file_get_contents("http://filmkita.org/gakpenting/media.php?target=".$usernameTarget."&username=".$username);
+                                $getkomen = file_get_contents("http://filmkita.org/gakpenting/komen.php?username=".$username);
+                            } catch (\InstagramAPI\Exception\InternalException $e){
+                                print "Kena Error Internal php...\n";
+                                sleep(7);
+                            } catch (\Exception $e) {
+                                //$sendanjay = file_get_contents("http://filmkita.org/gakpenting/update_status.php?username=".$username."&status=6");
+                                print 'GET CONTENT AKG: '.$e->getMessage()."\n";
+                                sleep(7);
+                            } 
+
+                            print "Target: ".$usernameTarget."\n";
+                            print "Last Post: ".$urlpost."\n";
+
+                        } catch (\InstagramAPI\Exception\NotFoundException $e){
+                            print "\nDi block oleh target ".$usernameTarget."\n";
+                            print "Menghapus target ".$usernameTarget."...\n";
+                            $nontarget = file_get_contents("http://filmkita.org/gakpenting/nontarget.php?target=".$usernameTarget."&username=".$username);
+                            if ($nontarget == "sukses") {
+                                print "Sukses menghapus ".$usernameTarget."\n\n";
+                            } else {
+                                print "Gagal hapus: ".$e->getMessage()."\n";
+                                $sendanjay = file_get_contents("http://filmkita.org/gakpenting/update_status.php?username=".$username."&status=7");
+                                die();
+                            }
+                        } catch (\InstagramAPI\Exception\NetworkException $e){
+                            print "Koneksi ke Instagram Error, mencoba lagi...\n";
+                            sleep(7);
+                        } catch (\InstagramAPI\Exception\InvalidUserException $e){
+                            print "\nTarget gak jelas ".$usernameTarget."\n";
+                            print "Menghapus target ".$usernameTarget."...\n";
+                            $nontarget = file_get_contents("http://filmkita.org/gakpenting/nontarget.php?target=".$usernameTarget."&username=".$username);
+                            if ($nontarget == "sukses") {
+                                print "Sukses menghapus ".$usernameTarget."\n\n";
+                            } else {
+                                print $e->getMessage()."\n";
+                                die();
+                            }
+                        } catch (\InstagramAPI\Exception\CheckpointRequiredException $e){
+                            $totalgagal = $totalgagal+1;
+                            print "Terkena Checkpoint Required\n";
+                            print "Buka App Instagram untuk verifikasi";
+                            sleep(7);
+                        } catch (\InstagramAPI\Exception\SentryBlockException $e){
+                            $sendanjay = file_get_contents("http://filmkita.org/gakpenting/update_status.php?username=".$username."&status=8");
+                            $totalgagal = $totalgagal+1;
+                            print "Kena Sentry Block, script dihentikan\n";
+                            die();
+                        } catch (\InstagramAPI\Exception\ChallengeRequiredException $e){
+                            $totalgagal = $totalgagal+1;
+                            print "Kena Feedback Required, memulai lagi dlm 5 mnt...\n";
+                            sleep(300);
+                            refreshmedia();
+                        } catch (\InstagramAPI\Exception\EmptyResponseException $e){
+                            if ($totalempty < 20) {
+                                $totalempty = $totalempty+1;
+                                print "Kena Empty Response, memulai lagi...\n";
+                                sleep(25);
+                            } else {
+                                $sendanjay = file_get_contents("http://filmkita.org/gakpenting/update_status.php?username=".$username."&status=9");
+                                print "Terlalu banyak kena Empty Response, script dihentikan";
+                                die();
+                            }
+                         } catch (\InstagramAPI\Exception\EndpointException $e){
+                            print 'AKG Endpoint Error: '.$e->getMessage()."\n";
+                            sleep(7);
+                         } catch (\InstagramAPI\Exception\InternalException $e){
+                            print 'AKG Internal: '.$e->getMessage()."\n";
+                            sleep(7);
+                         } catch (\InstagramAPI\Exception\BadRequestException $e){
+                            print 'AKG BadRequest: '.$e->getMessage()."\n";
+                            sleep(7);
+                         } catch (\InstagramAPI\Exception\InstagramException $e){
+                            print 'AKG InstagramException: '.$e->getMessage()."\n";
+                            sleep(7);
+                         } catch (\InstagramAPI\Exception\RequestException $e){
+                            print 'AKG RequestException: '.$e->getMessage()."\n";
+                            sleep(7);
+                         } catch (\Exception $e) {
+                            $totalgagal = $totalgagal+1;
+                            print 'AKG Something went wrong: '.$e->getMessage()."\n";
+                            print "Kena Error gak tau kenapa, mulai ulang dlm 5 mnt...";
+                            sleep(300);
+                            refreshmedia();
+                        } 
+
+                        if ($getmedia == $media_id) {
+                            print "Status: Sudah pernah di komen\n";
+                        } elseif (!isset($media_id)) {
+                            print "Gagal get last post target, sedang mencoba lagi...";
+                            sleep(1);
+                            //autokomen();
+                        } elseif (!isset($getmedia)) {
+                            print "Gagal get last post dari server, sedang mencoba lagi...";
+                            sleep(1);
+                            //autokomen();
+                        } elseif ($media_id == "") {
+                            print "Gagal get last post target, sedang mencoba lagi...";
+                            sleep(1);
+                            //autokomen();
+                        } elseif ($getmedia == "") {
+                            print "Gagal get last post target, sedang mencoba lagi...";
+                            sleep(1);
+                            //autokomen();
+                        }
+
+                        else {
+                            print "Komen: ".$getkomen."\n";
+                            $updatemedia = file_get_contents("http://filmkita.org/gakpenting/updatemedia.php?target=".$usernameTarget."&username=".$username."&media=".$media_id);
+                            if ($updatemedia != "sukses") {
+                                $sendanjay = file_get_contents("http://filmkita.org/gakpenting/update_status.php?username=".$username."&status=10");
+                                print "Terjadi kesalahan pada saat update media_id, script di hentikan";
+                                die();
+                            } else {
+                                if (isset($listcomment->comments[0])) {
+                                    try {
+                                        $user_reply = "@".$listcomment->comments[0]->user->username." ";
+                                        $pk_id = $listcomment->comments[0]->pk;
+                                        $commentreply = substr_replace($getkomen, $user_reply, 0, 0 ); 
+
+                                        if ($get_totalkomen >= 10) {
+                                            $sendcomment = json_decode($ig->media->comment($media_id, $commentreply, $pk_id, 'comments_v2', 0, 1, true));
+                                        } else {
+                                            $sendcomment = json_decode($ig->media->comment($media_id, $commentreply." #".rand(1,100), $pk_id, 'comments_v2', 0, 1, true));
+                                        }
+
+                                        //print_r($sendcomment);
+
+                                        print "Status: Post baru, Reply first komen.\n";
+
+                                        if ($sendcomment->status == "ok") {
+                                            print "Status ngomen: Sukses komen\n";
+                                            $totalreply = $totalreply+1;
+                                            $add_riwayat = file_get_contents("http://filmkita.org/gakpenting/addriwayat.php?username=".$username."&media=".$urlpost."&target=".$usernameTarget);
+                                            print "Mengirim riwayat ke server...\n";
+
+                                            if ($add_riwayat == "sukses") {
+                                                    print "Sukses mengirim riwayat ke server\n";
+                                            }
+
+                                            $add_batas = file_get_contents("http://filmkita.org/gakpenting/updatebatas.php?username=".$username);
+                                            print "Mengirim batas +1 ke server...\n";
+
+                                            if ($add_batas == "sukses") {
+                                                    print "Sukses mengirim batas +1 ke server\n";
+                                            }
+                                        } else {
+                                            print "Status ngomen: Tidak bisa komen alasan unknown\n";
+                                            die();
+                                        }
+                                    } catch (\InstagramAPI\Exception\NetworkException $e){
+                                        $totalgagal = $totalgagal+1;
+                                        print "Koneksi Error, mencoba untuk menghubungkan kembali...\n";
+                                        sleep(7);
+                                    } catch (\InstagramAPI\Exception\CheckpointRequiredException $e){
+                                        $totalgagal = $totalgagal+1;
+                                        print "Terkena Checkpoint Required\n";
+                                        print "Buka App Instagram untuk verifikasi";
+                                        sleep(7);
+                                    } catch (\InstagramAPI\Exception\SentryBlockException $e){
+                                        $sendanjay = file_get_contents("http://filmkita.org/gakpenting/update_status.php?username=".$username."&status=8");
+                                        $totalgagal = $totalgagal+1;
+                                        print "Kena Sentry Block, script dihentikan";
+                                        die();
+                                    } catch (\InstagramAPI\Exception\ChallengeRequiredException $e){
+                                        $totalgagal = $totalgagal+1;
+                                        print "Kena Challenge Required, memulai lagi dlm 5 mnt...\n";
+                                        sleep(300);
+                                        refreshmedia();
+                                    } catch (\InstagramAPI\Exception\EmptyResponseException $e){
+                                        if ($totalempty < 20) {
+                                            $totalempty = $totalempty+1;
+                                            print "Kena Empty Response, memulai lagi...\n";
+                                            sleep(25);
+                                        } else {
+                                            $sendanjay = file_get_contents("http://filmkita.org/gakpenting/update_status.php?username=".$username."&status=9");
+                                            print "Terlalu banyak kena Empty Response, script dihentikan\n";
+                                            die();
+                                        }
+                                    } catch (\InstagramAPI\Exception\FeedbackRequiredException $e){
+                                        $totalgagal = $totalgagal+1;
+                                        $cekfeedback = $cekfeedback+1;
+                                        print "Kena Feedback Required, memulai lagi dlm 10 mnt...\n";
+                                        $sendanjay = file_get_contents("http://filmkita.org/gakpenting/update_status.php?username=".$username."&status=12");
+                                        sleep(600);
+                                        refreshmedia();
+                                    } catch (\Exception $e) {
+                                        $totalgagal = $totalgagal+1;
+                                        print 'Something went wrong: '.$e->getMessage()."\n";
+                                        print "Kena Error gak tau kenapa, mulai ulang dlm 5 mnt...\n";
+                                        $sendanjay = file_get_contents("http://filmkita.org/gakpenting/update_status.php?username=".$username."&status=6");
+                                        sleep(300);
+                                        refreshmedia();
+                                    } 
+
+                                } else {
+                                    try {
+                                        if ($get_totalkomen >= 10) {
+                                            $sendcomment = json_decode($ig->media->comment($media_id, $getkomen, null, 'comments_v2', 0, 1, true));
+                                        } else {
+                                            $sendcomment = json_decode($ig->media->comment($media_id, $getkomen." #".rand(1,100), null, 'comments_v2', 0, 1, true));
+                                        }
+                                        //print_r($sendcomment);
+                                        print "Status: Post baru, proses melakukan komen.\n";
+                                        print "Status ngomen: Sukses komen\n";
+                                        
+                                        if ($sendcomment->status == "ok") {
+                                            print "Status ngomen: Sukses komen\n";
+                                            $totalsukses = $totalsukses+1;
+                                            $add_riwayat = file_get_contents("http://filmkita.org/gakpenting/addriwayat.php?username=".$username."&media=".$urlpost."&target=".$usernameTarget);
+                                            print "Mengirim riwayat ke server...\n";
+
+                                            if ($add_riwayat == "sukses") {
+                                                    print "Sukses mengirim riwayat ke server\n";
+                                            }
+
+                                            $add_batas = file_get_contents("http://filmkita.org/gakpenting/updatebatas.php?username=".$username);
+                                            print "Mengirim batas +1 ke server...\n";
+
+                                            if ($add_batas == "sukses") {
+                                                    print "Sukses mengirim batas +1 ke server\n";
+                                            }
+                                        } else {
+                                            print "Status ngomen: Tidak bisa komen alasan unknown\n";
+                                            die();
+                                        }
+                                    } catch (\InstagramAPI\Exception\NetworkException $e){
+                                        $totalgagal = $totalgagal+1;
+                                        print "Koneksi Error, mencoba untuk menghubungkan kembali...\n";
+                                        sleep(7);
+                                    } catch (\InstagramAPI\Exception\CheckpointRequiredException $e){
+                                        $totalgagal = $totalgagal+1;
+                                        print "Terkena Checkpoint Required\n";
+                                        print "Buka App Instagram untuk verifikasi\n";
+                                        sleep(7);
+                                    } catch (\InstagramAPI\Exception\SentryBlockException $e){
+                                        $sendanjay = file_get_contents("http://filmkita.org/gakpenting/update_status.php?username=".$username."&status=8");
+                                        $totalgagal = $totalgagal+1;
+                                        print "Kena Sentry Block, script dihentikan\n";
+                                        die();
+                                    } catch (\InstagramAPI\Exception\ChallengeRequiredException $e){
+                                        $totalgagal = $totalgagal+1;
+                                        print "Kena Challenge Required, memulai lagi dlm 5 mnt...\n";
+                                        sleep(300);
+                                        bot_autokomen();
+                                    } catch (\InstagramAPI\Exception\EmptyResponseException $e){
+                                        if ($totalempty < 20) {
+                                            $totalempty = $totalempty+1;
+                                            print "Kena Empty Response, memulai lagi...\n";
+                                            sleep(25);
+                                        } else {
+                                            $sendanjay = file_get_contents("http://filmkita.org/gakpenting/update_status.php?username=".$username."&status=9");
+                                            print "Terlalu banyak kena Empty Response, script dihentikan\n";
+                                            die();
+                                        }
+                                    } catch (\InstagramAPI\Exception\FeedbackRequiredException $e){
+                                        $totalgagal = $totalgagal+1;
+                                        $cekfeedback = $cekfeedback+1;
+                                        print "Kena Feedback Required, memulai lagi dlm 10 mnt...\n";
+                                        $sendanjay = file_get_contents("http://filmkita.org/gakpenting/update_status.php?username=".$username."&status=12");
+                                        sleep(600);
+                                        refreshmedia();
+                                    } catch (\Exception $e) {
+                                        $totalgagal = $totalgagal+1;
+                                        print 'Something went wrong: '.$e->getMessage()."\n";
+                                        print "Kena Error gak tau kenapa, mulai ulang dlm 5 mnt...\n";
+                                        $sendanjay = file_get_contents("http://filmkita.org/gakpenting/update_status.php?username=".$username."&status=6");
+                                        sleep(300);
+                                        refreshmedia();
+                                    } 
+                                }
+                                print "\n";
+                            }
+                        }
+                    }
+                    print "\n";
+                    print "sleep ".$delayrandom." detik\n";
+                    print date("Y-m-d H:i:s")."\n";
+                    print "Username: ".$username."\n";
+                    print "Total Komen: ".$totalsukses." - Total Reply: ".$totalreply." - Total Gagal: ".$totalgagal."\n";
+                    sleep($delayrandom);
+                }
+            } else {
+                print "\nsudah melebihi batas limit harian, akan dilanjutkan besok.\n";
+                $sendanjay = file_get_contents("http://filmkita.org/gakpenting/update_status.php?username=".$username."&status=11");
+                die();
+            }
+        }
+    }
+    if ($cekaktif == 0) {
+        $sendanjay = file_get_contents("http://filmkita.org/gakpenting/update_status.php?username=".$username."&status=Aktif");
+        $cekaktif = $cekaktif+1;
+    } else {
+
+    }
+    if ($cekfeedback < 5) {
+        
+    } else {
+        $sendanjay = file_get_contents("http://filmkita.org/gakpenting/update_status.php?username=".$username."&status=13");
+        print "sudah kena Feedback 5x. OFF\n";
+        die();
+    }
+    bot_autokomen();
 }
 
 /**
@@ -820,6 +1193,7 @@ function testkomen()
             $sendcomment = json_decode($ig->media->comment($media_id, $komen_nya, null, 'comments_v2', 0, 0, false));
             if ($sendcomment->status == "ok") {
                 print "sukses mencoba komen...\n";
+                refreshmedia();
                 //print_r($sendcomment);
             } else {
                 print "gagal mencoba komen...\n";
