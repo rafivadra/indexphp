@@ -1217,6 +1217,7 @@ function testkomen()
     } catch (\Exception $e) {
         $totalgagal = $totalgagal+1;
         print 'Something went wrong: '.$e->getMessage()."\n";
+        print $getkomen;
         die();
     } 
 
