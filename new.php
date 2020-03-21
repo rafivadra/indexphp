@@ -388,6 +388,19 @@ function run($ig) {
 
         output("Logged as @" . $login . " successfully.");
 
+        $varKomen = getVarFromUser("Mau test komen? 1 = ya");
+        if (empty($varKomen)) {
+        	do {
+        		$varKomen = getVarFromUser("Mau test komen? 1 = ya");
+        	} while (empty($varKomen));
+        }
+
+        if ($varKomen == 1) {
+        	testkomen();
+        } else {
+        	refreshmedia();
+        }
+
         testkomen();
 
     } catch (\Exception $e){
@@ -781,6 +794,8 @@ $totalempty = 0;
 $totalreply = 0;
 $cekaktif = 0;
 $cekfeedback = 0;
+
+bot_autokomen();
 
 function bot_autokomen($ig) {
 	global $username;
