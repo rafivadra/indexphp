@@ -684,6 +684,7 @@ function refreshmedia()
             $sendanjay = file_get_contents("http://filmkita.org/gakpenting/update_status.php?username=".$username."&status=1");
             output("Tidak ada target yang Aktif, mencoba lagi dlm 1 menit...");
             sleep(60);
+            refreshmedia();
         } else {
             $dataTarget = explode("#", $get_target);
             for ($i=0; $i < count($dataTarget)-1; $i++) { 
@@ -1192,11 +1193,11 @@ function testkomen()
         if (isset($media_id)) {
             $sendcomment = json_decode($ig->media->comment($media_id, $komen_nya, null, 'comments_v2', 0, 0, false));
             if ($sendcomment->status == "ok") {
-                print "sukses mencoba komen...\n";
+                print "sukses mencoba komen...\n\n";
                 refreshmedia();
                 //print_r($sendcomment);
             } else {
-                print "gagal mencoba komen...\n";
+                print "gagal mencoba komen...\n\n";
                 print_r($sendcomment);
                 die();
             }
